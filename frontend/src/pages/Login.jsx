@@ -83,21 +83,24 @@ const Login = () => {
 
       {/* Login card */}
       <div className="w-full max-w-md relative z-10">
-        <div className={`p-8 animate-glow ${isDark ? 'bg-white/[0.05] backdrop-blur-xl border border-white/10' : 'bg-white border border-black/10 shadow-xl'}`} style={{ borderRadius: '16px' }}>
+        <div className={`p-8 md:p-10 animate-glow ${isDark ? 'bg-white/[0.05] backdrop-blur-xl border border-white/10' : 'bg-white border border-black/10 shadow-xl'}`} style={{ borderRadius: '16px' }}>
 
           {/* Logo & Name */}
           <div className="flex items-center justify-center space-x-3 mb-8">
             <div className="relative">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary via-accent to-pink-500 flex items-center justify-center shadow-lg shadow-primary/30">
-                <Bot className="w-7 h-7 text-white" />
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary via-accent to-pink-500 flex items-center justify-center shadow-lg shadow-primary/30">
+                <Bot className="w-8 h-8 text-white" />
               </div>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full flex items-center justify-center">
-                <Zap className="w-2 h-2 text-[#0a0a0f]" />
+              <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-400 rounded-full flex items-center justify-center">
+                <Zap className="w-3 h-3 text-[#0a0a0f]" />
               </div>
             </div>
-            <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              JobRobots <span className="gradient-text">AI</span>
-            </h1>
+            <div>
+              <h1 className={`text-3xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                JobRobots <span className="gradient-text">AI</span>
+              </h1>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Your AI-Powered Career Assistant</p>
+            </div>
           </div>
 
           {/* Error message */}

@@ -1,4 +1,5 @@
-const API_URL = '/api';
+// Use environment variable in production, fallback to relative path in development
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 class ApiService {
   constructor() {
