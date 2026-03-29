@@ -1,63 +1,114 @@
 # Deploy JobRobots AI
 
-## Step 1: Deploy Backend (Node.js/Express)
+## Architecture
 
-Use **Render.com** (free tier) for the backend:
-
-1. Go to [render.com](https://render.com) → Sign up / Login
-2. Click **New → Web Service**
-3. Connect your GitHub repo: `https://github.com/YOUR_USERNAME/jobrobots-ai`
-4. Set:
-   - **Root Directory:** `backend`
-   - **Build Command:** `npm install`
-   - **Start Command:** `node server.js`
-5. Add Environment Variables:
-   - `MONGO_URI` = your MongoDB Atlas connection string
-   - `JWT_SECRET` = jobrobots_secret_key_2024_production
-   - `GEMINI_API_KEY` = your Gemini API key
-   - `ELEVENLABS_API_KEY` = your ElevenLabs API key
-   - `PORT` = 5001
-6. Click **Deploy**
-
-After deploy, copy your URL: `https://jobrobots-ai-backend.onrender.com`
+| Service | Platform | Status |
+|---------|----------|--------|
+| User Frontend | Vercel | ✅ Already deployed |
+| Admin Panel | Vercel | ✅ Configured |
+| Backend (API) | Railway/Render | ⚠️ Needs deployment |
 
 ---
 
-## Step 2: Update Vercel Config
+## Step 1: Deploy Backend
 
-Edit `frontend/vercel.json`:
+### Option A: Railway (Recommended)
+1. Go to [railway.app](https://railway.app)
+2. Connect GitHub repo → Select `jobrobots-ai`
+3. Set Root Directory: `backend`
+4. Add Environment Variables:
+   ```
+   MONGO_URI=mongodb+srv://...
+   JWT_SECRET=jobrobots_secret_key_2024_production
+   PORT=5001
+   ALLOWED_ORIGINS=https://your-frontend.vercel.app,https://your-admin.vercel.app
+   GEMINI_API_KEY=...
+   ELEVENLABS_API_KEY=...
+   ```
+5. Deploy
+6. Copy URL (e.g., `https://jobrobots-backend.up.railway.app`)
 
-```json
-{
-  "rewrites": [
-    { "source": "/api/:path*", "destination": "https://YOUR-RENDER-URL.onrender.com/api/:path*" }
-  ]
-}
+### Option B: Render
+1. Go to [render.com](https://render.com)
+2. New → Web Service
+3. Connect GitHub repo
+4. Set:
+   - Root Directory: `backend`
+   - Build Command: `npm install`
+   - Start Command: `node server.js`
+5. Add same Environment Variables
+6. Deploy
+
+---
+
+## Step 2: Deploy/Update Frontend
+
+### User Frontend (if not deployed)
+```bash
+cd frontend
+vercel --prod
 ```
 
-Replace `YOUR-RENDER-URL` with your actual Render URL.
+### Admin Panel
+```bash
+cd admin-panel
+vercel --prod
+```
 
 ---
 
-## Step 3: Deploy Frontend to Vercel
+## Step 3: Configure API URL
 
-1. Go to [vercel.com](https://vercel.com) → Sign up / Login with GitHub
-2. Click **Add New → Project**
-3. Import your GitHub repo
-4. Set:
-   - **Framework Preset:** Vite
-   - **Root Directory:** `frontend`
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `dist`
-5. Click **Deploy**
+### On Vercel Dashboard:
 
-Your app will be live at: `https://jobrobots-ai-frontend.vercel.app`
+**User Frontend** → Settings → Environment Variables:
+```
+VITE_API_URL=https://your-railway-url.up.railway.app/api
+```
+
+**Admin Panel** → Settings → Environment Variables:
+```
+VITE_API_URL=https://your-railway-url.up.railway.app/api
+```
 
 ---
 
-## Important Notes
+## Step 4: Create Admin User
 
-- **CORS**: The `vercel.json` rewrite handles all API calls — no CORS issues
-- **MongoDB Atlas**: Your database stays on Atlas (no change needed)
-- **Environment Variables**: Set API keys on Render, not on Vercel
-- **Updates**: Push to GitHub → Vercel auto-deploys
+After backend deploys, run:
+```bash
+cd backend
+npm run seed:admin
+```
+
+---
+
+## URLs After Deployment
+
+| Service | URL |
+|---------|-----|
+| User Frontend | `https://your-frontend.vercel.app` |
+| Admin Panel | `https://your-admin.vercel.app` |
+| Backend API | `https://your-backend.up.railway.app` |
+
+---
+
+## Admin Login
+- Email: `admin@jobrobots.ai`
+- Password: `JobRobots@2024!`
+
+---
+
+## Troubleshooting
+
+### CORS Errors
+- Add your Vercel URLs to `ALLOWED_ORIGINS` on backend
+- Example: `https://jobrobots.vercel.app,https://admin-jobrobots.vercel.app`
+
+### API Not Working
+- Check `VITE_API_URL` ends with `/api`
+- Verify backend is running
+
+### Login Issues
+- Clear browser cache
+- Check JWT_SECRET is same everywhere

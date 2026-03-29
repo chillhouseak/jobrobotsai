@@ -1,5 +1,27 @@
-// Use environment variable in production, fallback to relative path in development
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+// Use environment variable in production, fallback to relative path
+const getApiUrl = () => {
+  // Try to use the environment variable first
+  const envUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) ||
+                 (typeof process !== 'undefined' && process.env?.VITE_API_URL);
+
+  if (envUrl) {
+    return envUrl;
+  }
+
+  // In development or if env not set, use relative path (works with Vite proxy)
+  if (typeof window !== 'undefined' && !window.location.hostname.includes('vercel')) {
+    return '/api';
+  }
+
+  // In production, use same domain API
+  if (typeof window !== 'undefined') {
+    return window.location.origin + '/api';
+  }
+
+  return '/api';
+};
+
+const API_URL = getApiUrl();
 
 class ApiService {
   constructor() {
