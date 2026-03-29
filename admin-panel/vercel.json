@@ -8,9 +8,7 @@
     }
   ],
   "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
+    { "handle": "filesystem" },   // ✅ serve real files first
+    { "src": "/.*", "dest": "/index.html" }  // fallback for React routing
   ]
 }
