@@ -23,7 +23,12 @@ const setCorsHeaders = (req, res) => {
 export default async function handler(req, res) {
   try {
     const { url, method } = req;
-    const pathname = url.split("?")[0];
+    let pathname = url.split("?")[0];
+
+    // ✅ REMOVE /api PREFIX (IMPORTANT FIX)
+    if (pathname.startsWith("/api")) {
+      pathname = pathname.replace("/api", "");
+    }
 
     // ✅ Handle OPTIONS FIRST
     if (method === "OPTIONS") {
@@ -35,7 +40,7 @@ export default async function handler(req, res) {
     setCorsHeaders(req, res);
 
     // ========================
-    // 🔥 ROUTING FIX (IMPORTANT)
+    // 🔥 ROUTING (NOW WORKS WITH /api)
     // ========================
 
     if (pathname.startsWith("/auth/")) {
