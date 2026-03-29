@@ -25,7 +25,8 @@ const authMiddleware = async (req) => {
 export default async function handler(req, res) {
   await connectDB();
 
-  const { method, query, body } = req;
+ const { method, query } = req;
+const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
   const { action } = query;
 
   // CORS
