@@ -74,9 +74,7 @@ export default async function handler(req, res) {
         message: "API is running"
       });
     }
-    if (pathname.startsWith("/api/ai/image")) {
-  return await imageHandler(req, res);
-}
+  
 
     return res.status(404).json({
       success: false,
