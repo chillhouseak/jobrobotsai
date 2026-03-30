@@ -2,7 +2,7 @@ import authHandler from './auth/[action].js';
 import adminHandler from './admin/[...action].js';
 import aiHandler from './ai/[action].js';
 import webhookHandler from './webhooks/[action].js';
-
+import imageHandler from './ai/image.js';
 // ✅ CORS
 const setCorsHeaders = (req, res) => {
   const allowedOrigins = [
@@ -74,6 +74,9 @@ export default async function handler(req, res) {
         message: "API is running"
       });
     }
+    if (pathname.startsWith("/api/ai/image")) {
+  return await imageHandler(req, res);
+}
 
     return res.status(404).json({
       success: false,
