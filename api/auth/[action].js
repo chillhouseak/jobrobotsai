@@ -2,14 +2,14 @@ import jwt from 'jsonwebtoken';
 import connectDB from '../db.js';
 import User from '../models/User.js';
 
-// Generate JWT Token
+// ✅ Generate JWT
 const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
     expiresIn: '30d'
   });
 };
 
-// Auth middleware
+// ✅ Auth middleware
 const authMiddleware = async (req) => {
   const authHeader = req.headers.authorization;
 
@@ -18,30 +18,46 @@ const authMiddleware = async (req) => {
   }
 
   const token = authHeader.split(' ')[1];
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
-  return decoded;
+  return jwt.verify(token, process.env.JWT_SECRET);
 };
 
 export default async function handler(req, res) {
-  await connectDB();
-
- const { method, query } = req;
-const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-  const { action } = query;
-
-  // CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
   try {
-    // Login
+    // ✅ CONNECT DB FIRST (CRITICAL)
+    await connectDB();
+
+    const { method, query } = req;
+    const body =
+      typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+
+    const { action } = query;
+
+    // =========================
+    // ✅ GLOBAL CORS (SAFE)
+    // =========================
+    const allowedOrigins = [
+      "https://jobrobotsaii-qbjo.vercel.app",
+      "https://jobrobotsaii-6jrn.vercel.app"
+    ];
+
+    const origin = req.headers.origin;
+
+    if (allowedOrigins.includes(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+    }
+
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+    if (method === "OPTIONS") {
+      return res.status(200).end();
+    }
+
+    // =========================
+    // 🔥 LOGIN
+    // =========================
     if (action === 'login' && method === 'POST') {
-      const { email, password, name } = body;
+      const { email, password, name } = body || {};
 
       if (!email || !password) {
         return res.status(400).json({
@@ -52,12 +68,14 @@ const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
 
       let user = await User.findOne({ email: email.toLowerCase() }).select('+password');
 
+      // ✅ Create user if not exists
       if (!user) {
         const newUser = new User({
           name: name || email.split('@')[0],
           email: email.toLowerCase(),
           password
         });
+
         await newUser.save();
 
         const token = generateToken(newUser._id);
@@ -78,6 +96,7 @@ const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
         });
       }
 
+      // ✅ Check password
       const isMatch = await user.comparePassword(password);
 
       if (!isMatch) {
@@ -105,9 +124,11 @@ const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
       });
     }
 
-    // Register
+    // =========================
+    // 🔥 REGISTER
+    // =========================
     if (action === 'register' && method === 'POST') {
-      const { name, email, password } = body;
+      const { name, email, password } = body || {};
 
       if (!name || !email || !password) {
         return res.status(400).json({
@@ -117,10 +138,11 @@ const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
       }
 
       const existingUser = await User.findOne({ email: email.toLowerCase() });
+
       if (existingUser) {
         return res.status(400).json({
           success: false,
-          message: 'User with this email already exists'
+          message: 'User already exists'
         });
       }
 
@@ -149,9 +171,12 @@ const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
       });
     }
 
-    // Me (Get current user)
+    // =========================
+    // 🔥 GET CURRENT USER
+    // =========================
     if (action === 'me' && method === 'GET') {
       const decoded = await authMiddleware(req);
+
       const user = await User.findById(decoded.id);
 
       if (!user) {
@@ -163,32 +188,15 @@ const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
 
       return res.status(200).json({
         success: true,
-        data: {
-          user: {
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            skills: user.skills,
-            experienceLevel: user.experienceLevel,
-            targetRole: user.targetRole,
-            phone: user.phone,
-            location: user.location,
-            linkedin: user.linkedin,
-            bio: user.bio,
-            plan: user.plan,
-            aiCredits: user.aiCredits,
-            resumeGenerations: user.resumeGenerations,
-            interviewSessions: user.interviewSessions,
-            createdAt: user.createdAt
-          }
-        }
+        data: { user }
       });
     }
 
-    // Profile (Update)
+    // =========================
+    // 🔥 UPDATE PROFILE
+    // =========================
     if (action === 'profile' && method === 'PUT') {
       const decoded = await authMiddleware(req);
-      const { name, skills, experienceLevel, targetRole, phone, location, linkedin, bio } = body;
 
       const user = await User.findById(decoded.id);
 
@@ -199,55 +207,28 @@ const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
         });
       }
 
-      if (name !== undefined) user.name = name;
-      if (skills !== undefined) user.skills = skills;
-      if (experienceLevel !== undefined) user.experienceLevel = experienceLevel;
-      if (targetRole !== undefined) user.targetRole = targetRole;
-      if (phone !== undefined) user.phone = phone;
-      if (location !== undefined) user.location = location;
-      if (linkedin !== undefined) user.linkedin = linkedin;
-      if (bio !== undefined) user.bio = bio;
-
+      Object.assign(user, body);
       await user.save();
 
       return res.status(200).json({
         success: true,
         message: 'Profile updated successfully',
-        data: {
-          user: {
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            skills: user.skills,
-            experienceLevel: user.experienceLevel,
-            targetRole: user.targetRole,
-            phone: user.phone,
-            location: user.location,
-            linkedin: user.linkedin,
-            bio: user.bio,
-            plan: user.plan,
-            aiCredits: user.aiCredits,
-            resumeGenerations: user.resumeGenerations,
-            interviewSessions: user.interviewSessions,
-            createdAt: user.createdAt
-          }
-        }
+        data: { user }
       });
     }
 
-    res.status(404).json({ success: false, message: 'Route not found' });
+    // =========================
+    // ❌ NOT FOUND
+    // =========================
+    return res.status(404).json({
+      success: false,
+      message: 'Route not found'
+    });
 
   } catch (error) {
-    console.error('Auth API Error:', error);
+    console.error("🔥 AUTH ERROR:", error);
 
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid or expired token'
-      });
-    }
-
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message || 'Server error'
     });
