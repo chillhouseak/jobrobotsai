@@ -1,11 +1,12 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable');
+  throw new Error("Please define the MONGODB_URI environment variable");
 }
 
+// ✅ Global cache (important for serverless)
 let cached = global.mongoose;
 
 if (!cached) {
@@ -13,25 +14,34 @@ if (!cached) {
 }
 
 async function connectDB() {
-  if (cached.conn) {
+  // ✅ If already connected and ready, reuse it
+  if (cached.conn && mongoose.connection.readyState === 1) {
     return cached.conn;
   }
 
+  // ✅ Create connection if not already started
   if (!cached.promise) {
-    const opts = {
+    cached.promise = mongoose.connect(MONGODB_URI, {
       bufferCommands: false,
-    };
-
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-      return mongoose;
+      serverSelectionTimeoutMS: 5000,
     });
   }
 
   try {
+    // Wait for connection promise
     cached.conn = await cached.promise;
-  } catch (e) {
+
+    // ✅ EXTRA SAFETY: ensure connection is fully ready
+    if (mongoose.connection.readyState !== 1) {
+      await new Promise((resolve) => {
+        mongoose.connection.once("connected", resolve);
+      });
+    }
+
+  } catch (error) {
+    // Reset promise if failed
     cached.promise = null;
-    throw e;
+    throw error;
   }
 
   return cached.conn;
